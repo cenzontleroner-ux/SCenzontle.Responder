@@ -24,12 +24,11 @@ namespace SCenzontle.Responder.Controllers
                 return BadRequest(ModelState);
             }
 
-            var token = await _servicioDeAutenticacion.LoginAsync(modelo.Email, modelo.Password);
+            var respuesta = await _servicioDeAutenticacion.LoginAsync(modelo.Email, modelo.Password);
 
-            if (token != null)
+            if (respuesta != null)
             {
-                // Devuelve un objeto JSON con el token si el login fue exitoso
-                return Ok(new { token = token });
+                return Ok(respuesta);
             }
 
             return Unauthorized(new { mensaje = "Credenciales incorrectas" });
