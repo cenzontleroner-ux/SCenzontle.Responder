@@ -7,15 +7,11 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <None Remove="SolutionItems\BDSCenzontle.ldf" />
-    <None Remove="SolutionItems\BDSCenzontle.mdf" />
+    <None Remove="SolutionItems\BDSegCenzontle.mdf" />
   </ItemGroup>
 
   <ItemGroup>
-    <Content Include="SolutionItems\BDSCenzontle.ldf">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
-    <Content Include="SolutionItems\BDSCenzontle.mdf">
+    <Content Include="SolutionItems\BDSegCenzontle.mdf">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
   </ItemGroup>
