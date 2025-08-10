@@ -53,15 +53,43 @@ namespace SCenzontle.Responder.Negocio.Servicios
             return null;
         }
 
+        public async Task<IdentityResult> CambiarContrasenaAsync(string email, string contrasenaActual, string nuevaContrasena)
+        {
+            
+            var usuario = await _userManager.FindByEmailAsync(email);
+            if (usuario == null)
+            {
+                
+                return IdentityResult.Failed(new IdentityError { Description = "Usuario no encontrado." });
+            }
+
+            
+            var resultado = await _userManager.ChangePasswordAsync(usuario, contrasenaActual, nuevaContrasena);
+
+            return resultado;
+        }
+
         private async Task<string> GenerarJwtAsync(Usuario usuario, IList<string> roles)
         {
             var claims = new List<Claim>
-            {
-                new Claim(JwtRegisteredClaimNames.Sub, usuario.Email!),
-                new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
-                new Claim(ClaimTypes.NameIdentifier, usuario.Id)
-            };
+    {
+        // Claim del "Subject" (recomendado por el estándar, generalmente el ID o email)
+        new Claim(JwtRegisteredClaimNames.Sub, usuario.Email!),
+        
+        // Claim para el ID del token
+        new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
+        
+        // Claim para el identificador de usuario
+        new Claim(ClaimTypes.NameIdentifier, usuario.Id),
+        
+        // Claim explícita para el email (opcional, pero útil para claridad)
+        new Claim(ClaimTypes.Email, usuario.Email!),
+        
+        // Claim para el nombre del usuario
+        new Claim(ClaimTypes.Name, usuario.UserName!) // O usa usuario.Nombre
+    };
 
+            // Agregar los roles como claims
             foreach (var role in roles)
             {
                 claims.Add(new Claim(ClaimTypes.Role, role));
