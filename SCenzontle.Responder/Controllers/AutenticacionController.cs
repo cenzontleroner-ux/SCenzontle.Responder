@@ -24,13 +24,12 @@ namespace SCenzontle.Responder.Controllers
                 return BadRequest(ModelState);
             }
 
-            var resultado = await _servicioDeAutenticacion.LoginAsync(modelo.Email, modelo.Password);
+            var token = await _servicioDeAutenticacion.LoginAsync(modelo.Email, modelo.Password);
 
-            if (resultado.Succeeded)
+            if (token != null)
             {
-                // El login fue exitoso. Aquí podrías generar un token JWT o una cookie.
-                // Por ahora, solo devolveremos un mensaje de éxito.
-                return Ok(new { mensaje = "Login exitoso" });
+                // Devuelve un objeto JSON con el token si el login fue exitoso
+                return Ok(new { token = token });
             }
 
             return Unauthorized(new { mensaje = "Credenciales incorrectas" });
