@@ -11,7 +11,9 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Content Include="SolutionItems\BDSCenzontle.ldf" />
+    <Content Include="SolutionItems\BDSCenzontle.ldf">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
     <Content Include="SolutionItems\BDSCenzontle.mdf">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>

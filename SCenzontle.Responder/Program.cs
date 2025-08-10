@@ -20,6 +20,8 @@ builder.Services.AddIdentity<Usuario, IdentityRole>()
 
 // Configuración del servicio de registro
 builder.Services.AddScoped<ServicioDeRegistro>();
+// Agrega el servicio de autenticación
+builder.Services.AddScoped<ServicioDeAutenticacion>();
 
 // Configuración de roles
 builder.Services.AddAuthorization(options =>
@@ -33,6 +35,10 @@ builder.Services.AddAuthorization(options =>
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
+
+
+
+
 
 CorsSettings corsSettings = builder.Configuration.GetSection("CorsSettings").Get<CorsSettings>();
 
@@ -83,13 +89,7 @@ using (var scope = app.Services.CreateScope())
     SeedRoles().Wait();
 }
 
-// Agrega Identity
-builder.Services.AddIdentity<Usuario, IdentityRole>()
-    .AddEntityFrameworkStores<ApplicationDbContext>()
-    .AddDefaultTokenProviders();
 
-// Agrega el servicio de autenticación
-builder.Services.AddScoped<ServicioDeAutenticacion>();
 
 app.MapControllers();
 
