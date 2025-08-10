@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using SCenzontle.Responder.Comun.Model;
 using SCenzontle.Responder.Negocio.Servicios;
+using System.Security.Claims;
 using System.Threading.Tasks;
 
 namespace SCenzontle.Responder.Controllers
@@ -13,12 +14,37 @@ namespace SCenzontle.Responder.Controllers
     public class UsuarioController : ControllerBase
     {
         private readonly ServicioDeAutenticacion _servicioDeAutenticacion;
+        private readonly ServicioUsuario _servicioUsuario;
 
-        public UsuarioController(ServicioDeAutenticacion servicioDeAutenticacion)
+        // Constructor corregido para inyectar ambos servicios
+        public UsuarioController(ServicioDeAutenticacion servicioDeAutenticacion, ServicioUsuario servicioUsuario)
         {
             _servicioDeAutenticacion = servicioDeAutenticacion;
+            _servicioUsuario = servicioUsuario;
         }
 
+        [HttpGet]
+        public async Task<IActionResult> GetUsers()
+        {
+            // Extrae el email del token JWT (ClaimTypes.Email o JwtRegisteredClaimNames.Sub)
+            var userEmail = User.Identity.Name;
+
+            if (string.IsNullOrEmpty(userEmail))
+            {
+                // Si el token no tiene el claim de email, es un token inválido para este endpoint
+                return Unauthorized(new { mensaje = "Token inválido: no se pudo obtener el email del usuario." });
+            }
+
+            var usuarios = await _servicioUsuario.ObtenerUsuarios(userEmail);
+
+            // Manejo de errores devueltos por el stored procedure
+            if (usuarios.Count == 1 && usuarios.First().Nombre == null)
+            {
+                return BadRequest(new { mensaje = "Error: El usuario no existe o no tiene un rol asignado." });
+            }
+
+            return Ok(usuarios);
+        }
         [HttpPost("cambiar-password")]
         public async Task<IActionResult> CambiarPassword([FromBody] CambiarPasswordModel modelo)
         {
@@ -34,6 +60,8 @@ namespace SCenzontle.Responder.Controllers
             }
             // Aquí se extrae el email del token JWT, no se confía en el email del cuerpo de la petición
             var emailDesdeToken = User?.Identity?.Name??null;
+
+            var userGRoup = User.Claims.Select(p => new { p.Type, p.Value }).Where(q=>q.Type.Contains("claims/role"));
 
             if (emailDesdeToken == null || emailDesdeToken != modelo.Email)
             {

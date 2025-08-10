@@ -22,10 +22,10 @@ builder.Services.AddIdentity<Usuario, IdentityRole>()
     .AddEntityFrameworkStores<ApplicationDbContext>()
     .AddDefaultTokenProviders();
 
-// Configuración del servicio de registro
+
 builder.Services.AddScoped<ServicioDeRegistro>();
-// Agrega el servicio de autenticación
 builder.Services.AddScoped<ServicioDeAutenticacion>();
+builder.Services.AddScoped<ServicioUsuario>();
 
 // Configuración de roles
 builder.Services.AddAuthorization(options =>
