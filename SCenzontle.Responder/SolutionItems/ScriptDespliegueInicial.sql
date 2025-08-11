@@ -258,13 +258,14 @@ BEGIN
 
         -- Insertar los datos en la tabla de Póliza
         INSERT INTO [Seguros].[Poliza] (
-            idCliente,
-            numeroPoliza,
-            idTipoPoliza,
-            idStatusPoliza,
-            fechaInicio,
-            fechaFin,
-            costo
+            idUser          ,   
+            NumeroPoliza    ,
+            idTipoPoliza    ,
+            idStatusPoliza  , 
+            FechaInicio     ,
+            FechaFin        ,
+            MontoPrima      
+              
         )
         VALUES (
             @idCliente,
