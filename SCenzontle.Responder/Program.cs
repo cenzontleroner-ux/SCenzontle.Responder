@@ -26,6 +26,8 @@ builder.Services.AddIdentity<Usuario, IdentityRole>()
 builder.Services.AddScoped<ServicioDeRegistro>();
 builder.Services.AddScoped<ServicioDeAutenticacion>();
 builder.Services.AddScoped<ServicioUsuario>();
+builder.Services.AddScoped<ServicioCatalogo>();
+builder.Services.AddScoped<ServicioPoliza>();
 
 // Configuración de roles
 builder.Services.AddAuthorization(options =>

@@ -164,3 +164,132 @@ BEGIN
     END
 END;
 GO
+
+
+CREATE OR ALTER PROCEDURE [Seguros].[usp_CargaCatalogosUnificado]
+    @user_email NVARCHAR(256)
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    -- Declara la variable para el rol del usuario actual
+    DECLARE @current_user_role NVARCHAR(256);
+
+    -- Obtener el rol del usuario actual que solicita los datos
+    SELECT @current_user_role = R.Name
+    FROM dbo.AspNetUsers U
+    INNER JOIN dbo.AspNetUserRoles UR ON U.Id = UR.UserId
+    INNER JOIN dbo.AspNetRoles R ON UR.RoleId = R.Id
+    WHERE U.Email = @user_email;
+
+    -- Validar si el usuario existe y tiene permisos para acceder a esta información
+    IF @current_user_role IS NULL
+    BEGIN
+        SELECT 'Error: El usuario no existe o no tiene un rol asignado.' AS ErrorMessage;
+        RETURN;
+    END
+
+    -- Unificar las tres consultas en un único conjunto de resultados
+    -- 1. Obtener la lista de Status de Póliza
+    SELECT
+        'statusPoliza' AS tipoCatalogo,
+        CAST(idStatusPoliza AS NVARCHAR(MAX)) AS id,
+        nombreStatus AS [Desc]
+    FROM
+        Seguros.StatusPoliza
+
+    UNION ALL
+
+    -- 2. Obtener la lista de Tipos de Póliza
+    SELECT
+        'tipoPoliza' AS tipoCatalogo,
+        CAST(idTipoPoliza AS NVARCHAR(MAX)) AS id,
+        nombrePoliza AS [Desc]
+    FROM
+        Seguros.TipoPoliza
+
+    UNION ALL
+
+    -- 3. Obtener la lista de usuarios con rol 'Cliente'
+    -- Esta parte solo devuelve resultados si el rol del usuario actual es 'Admin' o 'Broker'
+    SELECT
+        'emailUserRolClient' AS tipoCatalogo,
+        U.Email AS id,
+        U.Email AS [Desc]
+    FROM
+        dbo.AspNetUsers U
+    INNER JOIN
+        dbo.AspNetUserRoles UR ON U.Id = UR.UserId
+    INNER JOIN
+        dbo.AspNetRoles R ON UR.RoleId = R.Id
+    WHERE
+        R.Name = 'Cliente'
+        AND @current_user_role IN ('Admin', 'Broker');
+END;
+GO
+
+CREATE OR ALTER PROCEDURE [Seguros].[usp_InsertPoliza]
+    @emailCliente NVARCHAR(256),
+    @numeroPoliza NVARCHAR(50),
+    @idTipoPoliza INT,
+    @idStatusPoliza INT,
+    @fechaInicio DATETIME,
+    @fechaFin DATETIME,
+    @costo DECIMAL(18, 2)
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    BEGIN TRY
+        -- Declara una variable para almacenar el ID del cliente
+        DECLARE @idCliente NVARCHAR(450);
+
+        -- Obtener el Id del cliente a partir de su correo electrónico
+        SELECT @idCliente = Id
+        FROM dbo.AspNetUsers
+        WHERE Email = @emailCliente;
+
+        -- Validar si el cliente existe
+        IF @idCliente IS NULL
+        BEGIN
+            RAISERROR ('Error: El cliente con el correo electrónico proporcionado no existe.', 16, 1);
+            RETURN;
+        END
+
+        -- Insertar los datos en la tabla de Póliza
+        INSERT INTO [Seguros].[Poliza] (
+            idCliente,
+            numeroPoliza,
+            idTipoPoliza,
+            idStatusPoliza,
+            fechaInicio,
+            fechaFin,
+            costo
+        )
+        VALUES (
+            @idCliente,
+            @numeroPoliza,
+            @idTipoPoliza,
+            @idStatusPoliza,
+            @fechaInicio,
+            @fechaFin,
+            @costo
+        );
+
+        -- Devolver el ID de la nueva póliza insertada
+        SELECT SCOPE_IDENTITY() AS NuevaPolizaId;
+
+    END TRY
+    BEGIN CATCH
+        -- En caso de error, devolver un mensaje descriptivo
+        DECLARE @ErrorMessage NVARCHAR(MAX), @ErrorSeverity INT, @ErrorState INT;
+        SELECT
+            @ErrorMessage = ERROR_MESSAGE(),
+            @ErrorSeverity = ERROR_SEVERITY(),
+            @ErrorState = ERROR_STATE();
+
+        RAISERROR (@ErrorMessage, @ErrorSeverity, @ErrorState);
+    END CATCH
+END;
+GO
+
