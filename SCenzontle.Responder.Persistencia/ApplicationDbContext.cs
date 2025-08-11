@@ -2,6 +2,8 @@
 using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 using SCenzontle.Responder.Comun.Model;
+using System.Data;
+using Microsoft.Data.SqlClient;
 
 
 namespace SCenzontle.Responder.Persistencia
@@ -32,6 +34,14 @@ namespace SCenzontle.Responder.Persistencia
         }
         public async Task<int> InsertarPolizaAsync(PolizaModel polizaData)
         {
+            // Crie o parâmetro de saída para capturar o ID
+            var nuevaPolizaIdParam = new SqlParameter
+            {
+                ParameterName = "@nuevaPolizaId",
+                SqlDbType = SqlDbType.Int,
+                Direction = ParameterDirection.Output
+            };
+
             var emailParam = new SqlParameter("@emailCliente", polizaData.EmailCliente);
             var numeroPolizaParam = new SqlParameter("@numeroPoliza", polizaData.NumeroPoliza);
             var tipoPolizaParam = new SqlParameter("@idTipoPoliza", polizaData.IdTipoPoliza);
@@ -40,20 +50,22 @@ namespace SCenzontle.Responder.Persistencia
             var fechaFinParam = new SqlParameter("@fechaFin", polizaData.FechaFin);
             var costoParam = new SqlParameter("@costo", polizaData.Costo);
 
-            // Se usa FromSqlRaw para ejecutar el stored procedure y mapear el resultado
-            var result = await this.Database.SqlQueryRaw<NuevaPolizaResponse>(
-                "EXEC [Seguros].[usp_InsertPoliza] @emailCliente, @numeroPoliza, @idTipoPoliza, @idStatusPoliza, @fechaInicio, @fechaFin, @costo",
+            // Use ExecuteSqlRawAsync para executar o stored procedure
+            // Ele não espera um conjunto de resultados, mas pode lidar com parâmetros de saída
+            await this.Database.ExecuteSqlRawAsync(
+                "EXEC [Seguros].[usp_InsertPoliza] @emailCliente, @numeroPoliza, @idTipoPoliza, @idStatusPoliza, @fechaInicio, @fechaFin, @costo, @nuevaPolizaId OUTPUT",
                 emailParam,
                 numeroPolizaParam,
                 tipoPolizaParam,
                 statusPolizaParam,
                 fechaInicioParam,
                 fechaFinParam,
-                costoParam
-            ).ToListAsync();
+                costoParam,
+                nuevaPolizaIdParam // Adicione o parâmetro de saída na chamada
+            );
 
-            // Retorna el ID de la nueva póliza
-            return result.Any() ? result.First().NuevaPolizaId : 0;
+            // Recupere o valor do parâmetro de saída
+            return (int)nuevaPolizaIdParam.Value;
         }
     }
 }
